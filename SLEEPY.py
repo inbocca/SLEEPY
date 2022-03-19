@@ -148,7 +148,6 @@ def start():
             print('\nCollegamento al lettore ed alla card in corso ..\n')
             print('Lettore ' + str(r).replace('[','').replace(']','').replace("'","") + ' collegato!\n')
     except:
-        print('entra qui')
         time.sleep(1.0)
         start()
 
