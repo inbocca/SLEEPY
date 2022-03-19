@@ -162,23 +162,32 @@ def check():
     global cardtype
     global cardrequest
     global connessione
+    global cardservice
     cardtype = AnyCardType()
     cardrequest = CardRequest( timeout=1, cardType=cardtype )
     cardservice = cardrequest.waitforcard()
     cardservice.connection.connect(CardConnection.T0_protocol)
     connessione = connection.connect(CardConnection.T0_protocol)
+    cardservice.connection.connect(connessione)
     cardservice.connection.transmit(SELECT, connessione)
 
 
 ################################################################################
 ### TRASFORMAZIONE PSC
 ################################################################################
+
 def psw():
     global PSC
     PIN = (str(txt.get()).strip().replace(' ',''))
-    if len(PIN) != 6:
-        print('ERRORE: Lunghezza PSC errata')
-        END = input('Premi INVIO per terminare..')
+    if len(PIN) == 0:
+        print('\nERRORE: non hai inserito la PSC!\n')
+        time.sleep(2.0)
+        print('\nScegli quale operazione vuoi eseguire..\n')
+        start()
+    elif len(PIN) != 6:
+        print('\nERRORE: lunghezza PSC errata!\n')
+        print('\nScegli quale operazione vuoi eseguire..\n')
+        time.sleep(2.0)
         start()
 
     pin = []
@@ -219,19 +228,20 @@ def scrivi():
         time.sleep(3.0)
         start()
 
-    risposta,sw1,sw2 = cardservice.connection.transmit(WRITE + IMPORTO, connessione)
-    if sw2 != 0:
-        print('ERRORE: PSC errata!')
-        time.sleep(3.0)
-        start()
-
-    print('\nVERIFICA DATI ..\n')
     check()
     cardservice = cardrequest.waitforcard()
     cardservice.connection.connect(connessione)
     cardservice.connection.transmit(SELECT, connessione)
+    risposta,sw1,sw2 = cardservice.connection.transmit(WRITE + IMPORTO, connessione)
+
+    print('\nVERIFICA DATI ..\n')
+    
+    cardservice = cardrequest.waitforcard()
+    cardservice.connection.connect(connessione)
+    cardservice.connection.transmit(SELECT, connessione)
     risposta,sw1,sw2 = cardservice.connection.transmit(READ + [36, 128], connessione)
-    print('\nRICARICA DI ' + OP + ' COMPLETATA!\n')
+
+    print('\nRICARICA COMPLETATA!\n')
     time.sleep(2.0)
     print('\nScegli quale operazione vuoi eseguire..\n')
     start()
@@ -247,7 +257,7 @@ def finestra1():
           IMPORTO.append(i)
       global OP
       OP = '50€'
-      textwidget.quit()
+      #textwidget.quit()
       if len(str(txt.get()).strip().replace(' ','')) != 6:
           print('ERRORE: Lunghezza PSC errata!')
           time.sleep(3.0)
@@ -266,7 +276,7 @@ def finestra2():
           IMPORTO.append(i)
       global OP
       OP = '40€'
-      textwidget.quit()
+      #textwidget.quit()
       if len(str(txt.get()).strip().replace(' ','')) != 6:
           print('ERRORE: Lunghezza PSC errata!')
           time.sleep(3.0)
@@ -285,7 +295,7 @@ def finestra3():
           IMPORTO.append(i)
       global OP
       OP = '30€'
-      textwidget.quit()
+      #textwidget.quit()
       if len(str(txt.get()).strip().replace(' ','')) != 6:
           print('ERRORE: Lunghezza PSC errata!')
           time.sleep(3.0)
@@ -304,7 +314,7 @@ def finestra4():
           IMPORTO.append(i)
       global OP
       OP = '20€'
-      textwidget.quit()
+      #textwidget.quit()
       if len(str(txt.get()).strip().replace(' ','')) != 6:
           print('ERRORE: Lunghezza PSC errata!')
           time.sleep(3.0)
@@ -323,7 +333,7 @@ def finestra5():
           IMPORTO.append(i)
       global OP
       OP = '10€'
-      textwidget.quit()
+      #textwidget.quit()
       if len(str(txt.get()).strip().replace(' ','')) != 6:
           print('ERRORE: Lunghezza PSC errata!')
           time.sleep(3.0)
@@ -388,6 +398,8 @@ def salva():
         start()
 
 def carica():
+    textwidget = tk.Text()
+    global IMPORTO
     path = os.path.dirname(os.path.abspath(__file__))
     obj = path + '\\credits.json'
     if os.path.isfile(obj):
@@ -405,19 +417,22 @@ def carica():
             print(i)
         print('\n')
         p = input('digita il nome del salvataggio da caricare..   ')
-
         try:
             IMP = f[p]
-            IMPORTO = '36, 128, ' + IMP
+            x = IMP.split(', ')
+            IMPORTO.append(36)
+            IMPORTO.append(128)
+            for y in x:
+                y = int(y)
+                IMPORTO.append(y)
         except:
             print('hai inserito un nome non valido\n')
             time.sleep(2.0)
             start()
         try:
+            psw()
             scrivi()
         except:
-            print('non hai inserito la PSC\n')
-            time.sleep(2.0)
             start()
     except:
         print('impossibile aprire il file dei salvataggi\n\n')
