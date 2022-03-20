@@ -48,9 +48,6 @@ CK_PSC = [0xFF, 0x20, 0x00, 0x00, 0x03] # + psc
 ### CREDITI
 ################################################################################
 
-IMPORTO = []
-END = ''
-#PSC = [115, 68, 189]
 
 CINQUANTA = [36,128,0x44,0x34,0xa9,0x66,0x3a,0xf0,
 0x47,0x0f,0xb6,0x57,0x85,0x00,0xc6,0x1f,0x66,0xa6,
@@ -140,6 +137,10 @@ con = False
 
 def start():
     try:
+        global END
+        END = ''
+        global IMPORTO
+        IMPORTO = []
         r=readers()
         global connection
         connection = r[0].createConnection()
@@ -208,6 +209,7 @@ def scrivi():
     global sw2
     global risposta
     print('\nSBLOCCO E SCRITTURA ..\n')
+
     check()
     cardservice = cardrequest.waitforcard()
     cardservice.connection.connect(connessione)
@@ -228,10 +230,10 @@ def scrivi():
         time.sleep(3.0)
         start()
 
-    check()
     cardservice = cardrequest.waitforcard()
     cardservice.connection.connect(connessione)
     cardservice.connection.transmit(SELECT, connessione)
+    risposta,sw1,sw2 = cardservice.connection.transmit(CK_PSC + PSC, connessione)
     risposta,sw1,sw2 = cardservice.connection.transmit(WRITE + IMPORTO, connessione)
 
     print('\nVERIFICA DATI ..\n')
@@ -240,7 +242,6 @@ def scrivi():
     cardservice.connection.connect(connessione)
     cardservice.connection.transmit(SELECT, connessione)
     risposta,sw1,sw2 = cardservice.connection.transmit(READ + [36, 128], connessione)
-
     print('\nRICARICA COMPLETATA!\n')
     time.sleep(2.0)
     print('\nScegli quale operazione vuoi eseguire..\n')
@@ -460,6 +461,54 @@ def salvataggi():
         print("devi prima creare il file dei salvataggi\n")
         time.sleep(2.0)
         start()
+
+def cancella():
+    path = os.path.dirname(os.path.abspath(__file__))
+    obj = path + '\\credits.json'
+    if os.path.isfile(obj):
+        print ("file trovato\n")
+        try:
+            JsonFile = open(path + "\\credits.json")
+            f = json.load(JsonFile)
+            JsonFile.close()
+            print('\nSALVATAGGI:')
+            c = 0
+            for i in f:
+                print(i)
+                c = c + 1
+            print('\n')
+        except:
+            print('impossibile aprire il file dei salvataggi\n\n')
+            time.sleep(2.0)
+            start()
+
+        if c != 0:
+            canc = input('\nQuale salvataggio vuoi eliminare?   ')
+            try:
+                del f[canc]
+                file = open(path + "\\credits.json", "w")
+                json.dump(f, file, indent=3)
+                file.close()
+                print('\nSalvataggio ' + canc + ' eliminato\n')
+                time.sleep(2.0)
+                print('\n\nScegli quale operazione vuoi eseguire..\n')
+                start()
+            except:
+                print('\nnome salvataggio non valido')
+                time.sleep(2.0)
+                print('\n\nScegli quale operazione vuoi eseguire..\n')
+                start()
+        else:
+            print('\nnessun salvataggio trovato\n')
+            time.sleep(2.0)
+            print('\n\nScegli quale operazione vuoi eseguire..\n')
+            start()
+
+    else:
+        print("devi prima creare il file dei salvataggi\n")
+        time.sleep(2.0)
+        print('\n\nScegli quale operazione vuoi eseguire..\n')
+        start()
     
     
 def info():
@@ -509,7 +558,7 @@ button6.grid(row=3, column=0, columnspan=2, pady=10,)
 button7 = tk.Button(text="Salva Importo", fg="black", width = 14, command=salva)
 button7.grid(row=4, column=0, columnspan=2, pady=10,)
 
-button8 = tk.Button(text="Canc. Salvataggio", fg="black", width = 14, command=carica)
+button8 = tk.Button(text="Canc. Salvataggio", fg="black", width = 14, command=cancella)
 button8.grid(row=3, column=2, columnspan=2, pady=10,)
 
 button9 = tk.Button(text="Carica Importo", fg="black", width = 14, command=carica)
